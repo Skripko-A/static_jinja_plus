@@ -1,6 +1,8 @@
 import argparse
 import os
 from pathlib import Path
+import sys
+
 
 from staticjinja import Site
 
@@ -43,6 +45,14 @@ def main() -> None:
     output_path = args.outpath
     static_path = Path(src_path) / "assets"
 
+    if not Path(src_path).exists():
+        print(f"Каталог {src_path} не найден", file=sys.stderr)
+        quit()
+
+    if not list(Path(src_path).glob('*.html')):
+        print("Не найдено файлов *.html", file=sys.stderr)
+        quit()
+    
     site = Site.make_site(
         searchpath=src_path,
         outpath=output_path,
@@ -51,9 +61,11 @@ def main() -> None:
         ],
         contexts=[(".*.html", get_context)],
     )
-
-    site.render(use_reloader=args.watch)
-
+    try:
+        site.render(use_reloader=args.watch)
+    except PermissionError:
+        print("Недостаточно прав", file=sys.stderr)
+    
 
 if __name__ == '__main__':
     main()
